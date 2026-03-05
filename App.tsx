@@ -12,6 +12,7 @@ import ProjectTasksScreen from './src/screens/ProjectTasksScreen';
 import TimeLogScreen from './src/screens/TimeLogScreen';
 import RegularizationScreen from './src/screens/RegularizationScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
+import HolidayScreen from './src/screens/HolidayScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +42,7 @@ const Navigation = () => {
             <Stack.Screen name="TimeLog" component={TimeLogScreen} />
             <Stack.Screen name="Regularization" component={RegularizationScreen} />
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
+            <Stack.Screen name="Holiday" component={HolidayScreen} />
           </>
         )}
       </Stack.Navigator>

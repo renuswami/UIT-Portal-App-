@@ -20,6 +20,7 @@ type RootStackParamList = {
     ProjectTasks: undefined;
     TimeLog: undefined;
     Regularization: undefined;
+    Holiday: undefined;
 };
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
@@ -44,11 +45,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
         { label: 'Time Log', routeName: 'TimeLog' as const },
     ];
 
+    const leaveTabs = [
+        { label: 'Leave', routeName: 'Leave' as const },
+        { label: 'Holiday', routeName: 'Holiday' as const },
+    ];
+
     const isHomeModule = route.name === 'Home' || route.name === 'Dashboard';
     const isAttendanceModule = route.name === 'Attendance' || route.name === 'Regularization';
     const isProjectModule = route.name === 'Project' || route.name === 'ProjectTasks' || route.name === 'TimeLog';
+    const isLeaveModule = route.name === 'Leave' || route.name === 'Holiday';
 
-    const currentTabs = isHomeModule ? homeTabs : isAttendanceModule ? attendanceTabs : isProjectModule ? projectTabs : [];
+    const currentTabs = isHomeModule ? homeTabs :
+        isAttendanceModule ? attendanceTabs :
+            isProjectModule ? projectTabs :
+                isLeaveModule ? leaveTabs : [];
 
     return (
         <View style={styles.container}>
@@ -116,14 +126,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
     },
-    subHeaderContent: {
-        maxWidth: 1240,
-        width: '100%',
-        alignSelf: 'center',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start', // Left align
-    },
+
     subHeaderTitle: {
         fontSize: 18,
         fontWeight: '700',

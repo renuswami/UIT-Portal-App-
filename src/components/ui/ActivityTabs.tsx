@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
         paddingRight: 12,
     },
     scrollContent: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 24,
     },
     tab: {
         paddingVertical: 16,
