@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MainLayout from '../components/layout/MainLayout';
@@ -23,14 +23,17 @@ const AttendanceScreen = () => {
     }>({ attendance: {}, holidays: {}, leaves: {} });
 
     const [balances, setBalances] = useState({ sick: 0, casual: 0, optional: 0 });
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         fetchData();
     }, [currentDate]);
 
-    const fetchData = async () => {
+    const fetchData = async (isRefreshing = false) => {
         if (!userEmail) return;
-        setLoading(true);
+        if (isRefreshing) setRefreshing(true);
+        else setLoading(true);
+
         try {
             const { userId, accountId } = await attendanceService.getUserIdByEmail(userEmail);
 
@@ -51,7 +54,12 @@ const AttendanceScreen = () => {
             console.error('Error fetching attendance data:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        fetchData(true);
     };
 
     const nextMonth = () => {
@@ -138,12 +146,22 @@ const AttendanceScreen = () => {
                 <View style={styles.cellsContainer}>
                     {cells.map((cell, index) => {
                         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
+                        const cellDate = new Date(year, month, cell.day);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const isFuture = cellDate > today;
+                        const isSunday = index % 7 === 0;
+
                         const att = cell.currentMonth ? data.attendance[dateString] : null;
                         const holiday = cell.currentMonth ? data.holidays[dateString] : null;
                         const leavesForDay: LeaveRecord[] = cell.currentMonth ? (data.leaves[dateString] || []) : [];
 
                         return (
-                            <View key={index} style={[styles.cell, !cell.currentMonth && styles.inactiveCell]}>
+                            <View key={index} style={[
+                                styles.cell,
+                                !cell.currentMonth && styles.inactiveCell,
+                                isSunday && styles.sundayCell
+                            ]}>
                                 <View style={styles.cellHeader}>
                                     <Text style={styles.dateText}>{cell.day}</Text>
                                     {att && att.hasRegularization && (
@@ -151,34 +169,58 @@ const AttendanceScreen = () => {
                                     )}
                                 </View>
                                 <View style={styles.statusContainer}>
-                                    {holiday && (
-                                        <LinearGradient
-                                            colors={['#fb6b39', '#fa67cd']}
-                                            start={{ x: 0, y: 0 }}
-                                            end={{ x: 1, y: 0 }}
-                                            style={[styles.statusLabel, styles.holidayLabel]}
-                                        >
-                                            <Text style={styles.holidayText} numberOfLines={1}>{holiday.name}</Text>
-                                        </LinearGradient>
-                                    )}
-                                    {leavesForDay.map((leave, leaveIdx) => (
-                                        <LinearGradient
-                                            key={leaveIdx}
-                                            colors={['#508ff6', '#a2c3fa']}
-                                            start={{ x: 0, y: 0 }}
-                                            end={{ x: 1, y: 0 }}
-                                            style={[styles.statusLabel, styles.sickLeaveLabel]}
-                                        >
-                                            <Text style={styles.sickLeaveText} numberOfLines={1}>{leave.type}</Text>
-                                        </LinearGradient>
-                                    ))}
-                                    {att && att.status?.toLowerCase().includes('present') && (
-                                        <View style={[styles.statusLabel, styles.presentLabel]}>
-                                            <Text style={styles.presentTitle}>
-                                                {att.status?.toLowerCase().includes('half') ? 'Present (Half Day)' : 'Present'}
-                                            </Text>
-                                            <Text style={styles.workHoursText}>{att.workHours || '0h 0m'}</Text>
-                                        </View>
+                                    {!isSunday && (
+                                        <>
+                                            {holiday ? (
+                                                <LinearGradient
+                                                    colors={['#fb6b39', '#fa67cd']}
+                                                    start={{ x: 0, y: 0 }}
+                                                    end={{ x: 1, y: 0 }}
+                                                    style={[styles.statusLabel, styles.holidayLabel]}
+                                                >
+                                                    <Text style={styles.holidayText} numberOfLines={1}>{holiday.name}</Text>
+                                                </LinearGradient>
+                                            ) : (
+                                                <>
+                                                    {leavesForDay.map((leave, leaveIdx) => {
+                                                        const isUnpaid = leave.type?.toLowerCase().includes('unpaid');
+                                                        if (isUnpaid) {
+                                                            return (
+                                                                <View key={leaveIdx} style={[styles.statusLabel, styles.absentLabel]}>
+                                                                    <Text style={styles.absentText} numberOfLines={1}>{leave.type}</Text>
+                                                                </View>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <LinearGradient
+                                                                key={leaveIdx}
+                                                                colors={['#508ff6', '#a2c3fa']}
+                                                                start={{ x: 0, y: 0 }}
+                                                                end={{ x: 1, y: 0 }}
+                                                                style={[styles.statusLabel, styles.sickLeaveLabel]}
+                                                            >
+                                                                <Text style={styles.sickLeaveText} numberOfLines={1}>
+                                                                    {leave.type}{leave.dayType ? ` - ${leave.dayType}` : ''}
+                                                                </Text>
+                                                            </LinearGradient>
+                                                        );
+                                                    })}
+                                                    {att && att.status?.toLowerCase().includes('present') && (
+                                                        <View style={[styles.statusLabel, styles.presentLabel]}>
+                                                            <Text style={styles.presentTitle}>
+                                                                {att.status?.toLowerCase().includes('half') ? 'Present (Half Day)' : 'Present'}
+                                                            </Text>
+                                                            <Text style={styles.workHoursText}>{att.workHours || '0h 0m'}</Text>
+                                                        </View>
+                                                    )}
+                                                    {cell.currentMonth && !isFuture && !holiday && leavesForDay.length === 0 && (!att || !att.status?.toLowerCase().includes('present')) && (
+                                                        <View style={[styles.statusLabel, styles.absentLabel]}>
+                                                            <Text style={styles.absentText}>Absent</Text>
+                                                        </View>
+                                                    )}
+                                                </>
+                                            )}
+                                        </>
                                     )}
                                 </View>
                             </View>
@@ -191,7 +233,13 @@ const AttendanceScreen = () => {
 
     return (
         <MainLayout title="Attendance">
-            <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.contentContainer}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+            >
                 {renderHeader()}
                 {loading ? (
                     <View style={styles.loaderContainer}>
@@ -315,6 +363,9 @@ const styles = StyleSheet.create({
     inactiveCell: {
         backgroundColor: '#FCFCFC',
     },
+    sundayCell: {
+        backgroundColor: '#fffef1ff',
+    },
     cellHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -374,6 +425,14 @@ const styles = StyleSheet.create({
     sickLeaveText: {
         fontSize: 10,
         color: '#FFFFFF',
+        fontWeight: '600',
+    },
+    absentLabel: {
+        backgroundColor: '#FFEBEE',
+    },
+    absentText: {
+        fontSize: 10,
+        color: '#D32F2F',
         fontWeight: '600',
     },
     loaderContainer: {

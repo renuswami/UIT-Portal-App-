@@ -12,6 +12,7 @@ export interface LeaveRecord {
     startDate: string;
     endDate: string;
     type: string;
+    dayType: string;
     status?: string;
 }
 
@@ -136,7 +137,7 @@ export const attendanceService = {
         });
 
         // Fetch Leaves
-        const leaveQuery = `SELECT Start_Date__c, End_Date__c, Leave_Type__c FROM Leave__c WHERE Start_Date__c <= ${endDate} AND End_Date__c >= ${startDate} AND Employee__r.PersonEmail = '${email}'`;
+        const leaveQuery = `SELECT Start_Date__c, End_Date__c, Leave_Type__c, Day_Type__c FROM Leave__c WHERE Start_Date__c <= ${endDate} AND End_Date__c >= ${startDate} AND Employee__r.PersonEmail = '${email}'`;
         console.log(`[AttendanceService] Leave Query: ${leaveQuery}`);
         const leaveRes = await salesforceApi.query(leaveQuery);
         console.log(`[AttendanceService] Found ${leaveRes.records.length} leave records`);
@@ -148,7 +149,8 @@ export const attendanceService = {
             const record: LeaveRecord = {
                 startDate: r.Start_Date__c,
                 endDate: r.End_Date__c,
-                type: r.Leave_Type__c
+                type: r.Leave_Type__c,
+                dayType: r.Day_Type__c
             };
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const key = d.toISOString().split('T')[0];
