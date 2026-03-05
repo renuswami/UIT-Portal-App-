@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     },
     contentRoot: {
         paddingHorizontal: 24,
-        marginTop: -60,
+        marginTop: -30,
         zIndex: 10,
         width: '100%',
         alignItems: 'center',
