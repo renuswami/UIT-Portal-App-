@@ -8,7 +8,7 @@ import { attendanceService } from '../../features/attendance/attendance.service'
 import { cameraService } from '../../services/camera.service';
 
 const CheckInWidget = () => {
-    const { userEmail } = useAuth();
+    const { userEmail, accountId } = useAuth();
     const [permission, requestPermission] = useCameraPermissions();
     const [isCameraActive, setIsCameraActive] = useState(false);
     const [capturedImage, setCapturedImage] = useState<string | null>(null); // Base64 for upload
@@ -25,9 +25,9 @@ const CheckInWidget = () => {
 
     // Restore session on mount
     React.useEffect(() => {
-        if (userEmail) {
+        if (accountId) {
             const restoreSession = async () => {
-                const activeSession = await attendanceService.getActiveWorkSession(userEmail);
+                const activeSession = await attendanceService.getActiveWorkSession(accountId);
                 if (activeSession) {
                     setIsPresent(true);
                     setCurrentSessionId(activeSession.id);
@@ -43,7 +43,7 @@ const CheckInWidget = () => {
             };
             restoreSession();
         }
-    }, [userEmail]);
+    }, [accountId]);
 
     // Timer Logic
     React.useEffect(() => {
@@ -113,12 +113,12 @@ const CheckInWidget = () => {
     };
 
     const confirmCheckIn = async () => {
-        if (!capturedImage || !userEmail) return;
+        if (!capturedImage || !accountId) return;
 
         setIsSubmitting(true);
         try {
             if (flowType === 'in') {
-                const sessionId = await attendanceService.checkIn(userEmail, capturedImage);
+                const sessionId = await attendanceService.checkIn(accountId, capturedImage);
                 const now = new Date();
                 setIsPresent(true);
                 setCurrentSessionId(sessionId);
@@ -265,7 +265,8 @@ const styles = StyleSheet.create({
         maxWidth: 400,
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
-        padding: 14, // Reduced from 20
+        padding: 14,
+        height: 300, // Fixed height to prevent card shrinking/growing
     },
     header: {
         flexDirection: 'row',
@@ -298,14 +299,13 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     contentArea: {
-        height: 160, // Increased from 120 for better balance
+        flex: 1, // Take all available space
         width: '100%',
         backgroundColor: '#F8F9FA',
         borderRadius: 12,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#F0F0F0',
-        marginBottom: 12,
     },
     cameraWrapper: {
         flex: 1,
@@ -412,6 +412,8 @@ const styles = StyleSheet.create({
     },
     footer: {
         width: '100%',
+        marginTop: 12, // Gap between content area and buttons
+        minHeight: 0,
     },
     actionButton: {
         height: 40, // Reduced from 48

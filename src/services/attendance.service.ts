@@ -80,14 +80,14 @@ export const attendanceService = {
         }));
     },
 
-    async fetchMonthlyData(year: number, month: number, userId: string, email: string) {
-        console.log(`[AttendanceService] Fetching Monthly Data for ${month}/${year}, User: ${userId}`);
+    async fetchMonthlyData(year: number, month: number, accountId: string) {
+        console.log(`[AttendanceService] Fetching Monthly Data for ${month}/${year}, Account: ${accountId}`);
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
         // Fetch Attendance
-        const attendanceQuery = `SELECT Id, Attendance_Date__c, Status__c, Work_Hours__c FROM Attendance__c WHERE Employee__r.PersonEmail = '${email}' AND Attendance_Date__c >= ${startDate} AND Attendance_Date__c <= ${endDate}`;
+        const attendanceQuery = `SELECT Id, Attendance_Date__c, Status__c, Work_Hours__c FROM Attendance__c WHERE Employee__c = '${accountId}' AND Attendance_Date__c >= ${startDate} AND Attendance_Date__c <= ${endDate}`;
         console.log(`[AttendanceService] Attendance Query: ${attendanceQuery}`);
         const attendanceRes = await salesforceApi.query(attendanceQuery);
         console.log(`[AttendanceService] Found ${attendanceRes.records.length} attendance records`);
@@ -137,7 +137,7 @@ export const attendanceService = {
         });
 
         // Fetch Leaves
-        const leaveQuery = `SELECT Start_Date__c, End_Date__c, Leave_Type__c, Day_Type__c FROM Leave__c WHERE Start_Date__c <= ${endDate} AND End_Date__c >= ${startDate} AND Employee__r.PersonEmail = '${email}'`;
+        const leaveQuery = `SELECT Start_Date__c, End_Date__c, Leave_Type__c, Day_Type__c FROM Leave__c WHERE Start_Date__c <= ${endDate} AND End_Date__c >= ${startDate} AND Employee__c = '${accountId}'`;
         console.log(`[AttendanceService] Leave Query: ${leaveQuery}`);
         const leaveRes = await salesforceApi.query(leaveQuery);
         console.log(`[AttendanceService] Found ${leaveRes.records.length} leave records`);

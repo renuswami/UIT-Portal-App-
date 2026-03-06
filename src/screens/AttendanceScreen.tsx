@@ -13,7 +13,7 @@ const MONTHS = [
 ];
 
 const AttendanceScreen = () => {
-    const { userEmail } = useAuth();
+    const { userEmail, accountId } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<{
@@ -27,25 +27,22 @@ const AttendanceScreen = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentDate]);
+    }, [currentDate, accountId]);
 
     const fetchData = async (isRefreshing = false) => {
-        if (!userEmail) return;
+        if (!accountId) return;
         if (isRefreshing) setRefreshing(true);
         else setLoading(true);
 
         try {
-            const { userId, accountId } = await attendanceService.getUserIdByEmail(userEmail);
-
             // Parallel fetch for data and balances
             const [result, balanceData] = await Promise.all([
                 attendanceService.fetchMonthlyData(
                     currentDate.getFullYear(),
                     currentDate.getMonth() + 1,
-                    userId,
-                    userEmail
+                    accountId
                 ),
-                accountId ? attendanceService.fetchLeaveBalances(accountId) : Promise.resolve({ sick: 0, casual: 0, optional: 0 })
+                attendanceService.fetchLeaveBalances(accountId)
             ]);
 
             setData(result);

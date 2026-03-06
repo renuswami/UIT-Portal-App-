@@ -26,14 +26,14 @@ export const attendanceService = {
     },
 
     /**
-     * Gets the active 'Checked In' session for today
+     * Gets the active 'Checked In' session for today based on Account
      */
-    async getActiveWorkSession(email: string): Promise<{ id: string; checkInTime: string } | null> {
-        console.log(`[AttendanceService] Checking for active session: ${email}`);
+    async getActiveWorkSession(accountId: string): Promise<{ id: string; checkInTime: string } | null> {
+        console.log(`[AttendanceService] Checking for active session for Account: ${accountId}`);
         try {
             const data = await salesforceApi.query(
                 `SELECT Id, Check_In__c FROM Work_Session__c 
-                 WHERE User__r.Email = '${email}' 
+                 WHERE Account__c = '${accountId}' 
                  AND Attendance__r.Date__c = TODAY 
                  AND Status__c = 'Checked In' 
                  ORDER BY CreatedDate DESC LIMIT 1`
@@ -54,46 +54,15 @@ export const attendanceService = {
     },
 
     /**
-     * Finds Salesforce identifiers for a given email
+     * Finds or creates today's Attendance record for an Account
      */
-    async getIdentifiers(email: string): Promise<AttendanceIdentifiers> {
-        console.log(`[AttendanceService] Fetching identifiers for: ${email}`);
-
-        // 1. Get Contact and Account
-        const contactData = await salesforceApi.query(
-            `SELECT Id, AccountId FROM Contact WHERE Email = '${email}' LIMIT 1`
-        );
-
-        if (contactData.totalSize === 0) {
-            throw new Error(`No Contact found for email: ${email}`);
-        }
-
-        const contactId = contactData.records[0].Id;
-        const accountId = contactData.records[0].AccountId;
-
-        // 2. Get User ID
-        const userData = await salesforceApi.query(
-            `SELECT Id FROM User WHERE Email = '${email}' LIMIT 1`
-        );
-
-        if (userData.totalSize === 0) {
-            throw new Error(`No User found for email: ${email}`);
-        }
-
-        const userId = userData.records[0].Id;
-        return { contactId, accountId, userId };
-    },
-
-    /**
-     * Finds or creates today's Attendance record
-     */
-    async getOrCreateTodayAttendance(userId: string, accountId: string): Promise<string> {
+    async getOrCreateTodayAttendance(accountId: string): Promise<string> {
         const todayStr = new Date().toISOString().split('T')[0];
-        const uniqueKey = `${userId}_${todayStr}`;
+        const uniqueKey = `${accountId}_${todayStr}`;
 
         // Check existing
         const existing = await salesforceApi.query(
-            `SELECT Id FROM Attendance__c WHERE User__c = '${userId}' AND Date__c = TODAY LIMIT 1`
+            `SELECT Id FROM Attendance__c WHERE Employee__c = '${accountId}' AND Date__c = TODAY LIMIT 1`
         );
 
         if (existing.totalSize > 0) {
@@ -103,7 +72,6 @@ export const attendanceService = {
         // Create new
         const result = await salesforceApi.create('Attendance__c', {
             Employee__c: accountId,
-            User__c: userId,
             Date__c: todayStr,
             Unique_Key__c: uniqueKey
         });
@@ -112,16 +80,14 @@ export const attendanceService = {
     },
 
     /**
-     * Performs a full Check-In flow
+     * Performs a full Check-In flow using Account ID
      */
-    async checkIn(email: string, base64Image: string): Promise<string> {
-        const ids = await this.getIdentifiers(email);
-        const attendanceId = await this.getOrCreateTodayAttendance(ids.userId, ids.accountId);
+    async checkIn(accountId: string, base64Image: string): Promise<string> {
+        const attendanceId = await this.getOrCreateTodayAttendance(accountId);
 
         // Create Work Session
         const session = await salesforceApi.create('Work_Session__c', {
-            User__c: ids.userId,
-            Account__c: ids.accountId,
+            Account__c: accountId,
             Attendance__c: attendanceId,
             Check_In__c: new Date().toISOString(),
             Status__c: 'Checked In'
