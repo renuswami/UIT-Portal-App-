@@ -9,8 +9,10 @@ const AUTH_KEYS = {
 };
 
 interface SalesforceTokenResponse {
-    access_token: string;
-    instance_url: string;
+    access_token?: string;
+    instance_url?: string;
+    error?: string;
+    error_description?: string;
 }
 
 interface SalesforceUserRecord {
@@ -27,6 +29,25 @@ const getRequiredEnv = (key: string): string => {
         throw new AppError(`Missing environment variable: ${key}`, 'AUTH_CONFIGURATION_ERROR');
     }
     return value;
+};
+
+
+const buildLoginErrorMessage = (payload: SalesforceTokenResponse): string => {
+    const description = payload.error_description?.toLowerCase() || '';
+
+    if (description.includes('authentication failure') || description.includes('invalid_grant')) {
+        return 'Invalid username or password. If your org requires a security token, append it to your password.';
+    }
+
+    if (payload.error_description) {
+        return payload.error_description;
+    }
+
+    if (payload.error) {
+        return payload.error;
+    }
+
+    return 'Invalid username or password';
 };
 
 const getAuthHeaders = async (): Promise<Record<string, string>> => {
@@ -59,9 +80,9 @@ export const authService = {
             }).toString()
         });
 
-        const tokenJson = await tokenRes.json() as SalesforceTokenResponse & { error_description?: string };
+        const tokenJson = await tokenRes.json() as SalesforceTokenResponse;
         if (!tokenRes.ok || !tokenJson.access_token || !tokenJson.instance_url) {
-            throw new AppError(tokenJson.error_description || 'Invalid username or password', 'AUTH_LOGIN_FAILED');
+            throw new AppError(buildLoginErrorMessage(tokenJson), 'AUTH_LOGIN_FAILED');
         }
 
         await Promise.all([

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth.service';
+import { AppError } from '../utils/errors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -43,17 +44,16 @@ const LoginScreen = () => {
 
             await login(matchedUsername, accountId);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             let message = 'Connection Error. Please check your internet connection.';
 
-            if (error.message === 'Invalid username or password') {
-                message = 'Invalid username or password.';
-            } else if (error.message && error.message.includes('Auth Error:')) {
+            if (error instanceof AppError) {
+                message = error.message;
+            } else if (error instanceof Error && error.message) {
                 message = error.message;
             }
 
             Alert.alert('Login Failed', message);
-            console.error(error);
         } finally {
             setLoading(false);
         }
