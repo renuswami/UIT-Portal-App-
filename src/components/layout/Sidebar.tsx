@@ -3,15 +3,8 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-nati
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 
-type RootStackParamList = {
-    Home: undefined;
-    Attendance: undefined;
-    Leave: undefined;
-    Project: undefined;
-    ProjectTasks: undefined;
-    TimeLog: undefined;
-};
 
 const Sidebar = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -44,24 +37,21 @@ const Sidebar = () => {
                             style={styles.menuItem}
                             onPress={() => navigation.navigate(item.routeName)}
                         >
-                            {({ hovered }) => (
-                                <>
-                                    <View style={[
-                                        styles.iconContainer,
-                                        isActive && styles.activeIconContainer,
-                                        hovered && !isActive && styles.hoveredIconContainer
-                                    ]}>
-                                        <MaterialCommunityIcons
-                                            name={item.icon}
-                                            size={24}
-                                            color={isActive ? '#FF7A00' : '#FFF5EB'}
-                                        />
-                                    </View>
-                                    <Text style={[styles.label, isActive && styles.activeLabel]}>
-                                        {item.label}
-                                    </Text>
-                                </>
-                            )}
+                            <>
+                                <View style={[
+                                    styles.iconContainer,
+                                    isActive && styles.activeIconContainer
+                                ]}>
+                                    <MaterialCommunityIcons
+                                        name={item.icon}
+                                        size={24}
+                                        color={isActive ? '#FF7A00' : '#FFF5EB'}
+                                    />
+                                </View>
+                                <Text style={[styles.label, isActive && styles.activeLabel]}>
+                                    {item.label}
+                                </Text>
+                            </>
                         </Pressable>
                     );
                 })}
@@ -110,9 +100,6 @@ const styles = StyleSheet.create({
     } as any,
     activeIconContainer: {
         backgroundColor: '#FFF5EB',
-    },
-    hoveredIconContainer: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
     },
     label: {
         color: '#FFF5EB',

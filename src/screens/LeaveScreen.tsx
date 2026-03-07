@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, TouchableOpacity, ScrollView, ActivityIndicator
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../context/AuthContext';
-import { attendanceService, LeaveRecord } from '../services/attendance.service';
+import { attendanceQueryService, LeaveRecord } from '../services/attendanceQuery.service';
 
 const LeaveScreen = () => {
     const { userEmail } = useAuth();
@@ -19,11 +19,11 @@ const LeaveScreen = () => {
         if (!userEmail) return;
         setLoading(true);
         try {
-            const { userId, accountId } = await attendanceService.getUserIdByEmail(userEmail);
+            const { userId, accountId } = await attendanceQueryService.getUserIdByEmail(userEmail);
 
             const [balanceData, leaveData] = await Promise.all([
-                accountId ? attendanceService.fetchLeaveBalances(accountId) : Promise.resolve({ sick: 0, casual: 0, optional: 0 }),
-                attendanceService.fetchAllLeaves(userId)
+                accountId ? attendanceQueryService.fetchLeaveBalances(accountId) : Promise.resolve({ sick: 0, casual: 0, optional: 0 }),
+                attendanceQueryService.fetchAllLeaves(userId)
             ]);
 
             setBalances(balanceData);

@@ -1,57 +1,78 @@
 import { authService } from '../services/auth.service';
+import { AppError } from '../utils/errors';
+
+interface SalesforceApiError {
+    errorCode?: string;
+    message?: string;
+}
+
+export interface SalesforceQueryResponse<TRecord> {
+    totalSize: number;
+    done: boolean;
+    records: TRecord[];
+}
+
+const parseSalesforceError = (payload: unknown): string => {
+    if (Array.isArray(payload) && payload.length > 0) {
+        const first = payload[0] as SalesforceApiError;
+        return first.message || first.errorCode || 'Salesforce request failed';
+    }
+
+    if (payload && typeof payload === 'object') {
+        const maybe = payload as SalesforceApiError;
+        return maybe.message || maybe.errorCode || 'Salesforce request failed';
+    }
+
+    return 'Salesforce request failed';
+};
 
 /**
  * Low-level service for interacting with Salesforce REST API
  */
 export const salesforceApi = {
-    async query(soql: string): Promise<any> {
+    async query<TRecord>(soql: string): Promise<SalesforceQueryResponse<TRecord>> {
         const instanceUrl = await authService.getInstanceUrl();
         const url = `${instanceUrl}/services/data/v60.0/query/?q=${encodeURIComponent(soql)}`;
 
-        console.log(`[SFApi] QUERY: ${url}`);
         const response = await authService.callApi(url, { method: 'GET' });
-
         const data = await response.json();
+
         if (!response.ok) {
-            const err = Array.isArray(data) ? data[0] : data;
-            console.error(`[SFApi] Query Failed: ${err.errorCode} - ${err.message}`);
-            throw new Error(err.message || 'Salesforce Query Failed');
+            throw new AppError(parseSalesforceError(data), 'SF_QUERY_FAILED', data);
         }
-        return data;
+
+        return data as SalesforceQueryResponse<TRecord>;
     },
 
-    async create(sobject: string, data: any): Promise<any> {
+    async create<TPayload extends object>(sobject: string, payload: TPayload): Promise<{ id: string; success: boolean; errors: string[] }> {
         const instanceUrl = await authService.getInstanceUrl();
         const url = `${instanceUrl}/services/data/v60.0/sobjects/${sobject}`;
 
-        console.log(`[SFApi] CREATE ${sobject}: ${url}`);
         const response = await authService.callApi(url, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
+        const data = await response.json();
         if (!response.ok) {
-            console.error(`[SFApi] Create ${sobject} Failed:`, JSON.stringify(result, null, 2));
-            throw new Error(result[0]?.message || `Failed to create ${sobject}`);
+            throw new AppError(parseSalesforceError(data), 'SF_CREATE_FAILED', data);
         }
-        return result;
+
+        return data as { id: string; success: boolean; errors: string[] };
     },
 
-    async update(sobject: string, id: string, data: any): Promise<void> {
+    async update<TPayload extends object>(sobject: string, id: string, payload: TPayload): Promise<void> {
         const instanceUrl = await authService.getInstanceUrl();
         const url = `${instanceUrl}/services/data/v60.0/sobjects/${sobject}/${id}`;
 
-        console.log(`[SFApi] UPDATE ${sobject} ${id}: ${url}`);
         const response = await authService.callApi(url, {
             method: 'PATCH',
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
-            const result = await response.json();
-            console.error(`[SFApi] Update ${sobject} Failed:`, JSON.stringify(result, null, 2));
-            throw new Error(result[0]?.message || `Failed to update ${sobject}`);
+            const data = await response.json();
+            throw new AppError(parseSalesforceError(data), 'SF_UPDATE_FAILED', data);
         }
     },
 
@@ -59,9 +80,6 @@ export const salesforceApi = {
         const instanceUrl = await authService.getInstanceUrl();
         const url = `${instanceUrl}/services/data/v60.0/sobjects/ContentVersion`;
 
-        console.log(`[SFApi] UPLOAD ContentVersion to: ${data.FirstPublishLocationId}`);
-
-        // Salesforce ContentVersion.VersionData expects raw base64 without headers
         const cleanedVersionData = data.VersionData.replace(/^data:image\/\w+;base64,/, '');
 
         const response = await authService.callApi(url, {
@@ -74,8 +92,7 @@ export const salesforceApi = {
 
         if (!response.ok) {
             const result = await response.json();
-            console.error('[SFApi] Upload Failed:', result);
-            throw new Error(result[0]?.message || 'File upload failed');
+            throw new AppError(parseSalesforceError(result), 'SF_UPLOAD_FAILED', result);
         }
     }
 };

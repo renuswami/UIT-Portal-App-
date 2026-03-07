@@ -3,15 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 
-type RootStackParamList = {
-    Home: undefined;
-    Attendance: undefined;
-    Leave: undefined;
-    Project: undefined;
-    ProjectTasks: undefined;
-    TimeLog: undefined;
-};
 
 const BottomNav = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
