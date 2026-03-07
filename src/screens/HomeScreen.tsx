@@ -12,6 +12,7 @@ const HomeScreen = () => {
     const { width } = useWindowDimensions();
     const isDesktop = width > 1024; // Wider threshold for dual column
     const userName = userEmail?.split('@')[0] || 'User';
+    const [activeTab, setActiveTab] = React.useState('Approvals');
 
     return (
         <MainLayout title="Overview">
@@ -40,8 +41,8 @@ const HomeScreen = () => {
 
                         {/* Right Column: Activities & Approvals (Desktop Only feature or stacked) */}
                         <View style={styles.rightColumn}>
-                            <ActivityTabs />
-                            <ActivityContentCard />
+                            <ActivityTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+                            <ActivityContentCard activeTab={activeTab} />
                         </View>
                     </View>
                 </View>

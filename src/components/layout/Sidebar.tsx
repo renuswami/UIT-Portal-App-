@@ -37,14 +37,15 @@ const Sidebar = () => {
             </View>
             <ScrollView contentContainerStyle={styles.menuList} showsVerticalScrollIndicator={false}>
                 {menuItems.map((item) => {
-                    const isActive = route.name === item.routeName;
+                    const isActive = route.name === item.routeName ||
+                        (item.routeName === 'Project' && ['ProjectTasks', 'TimeLog'].includes(route.name));
                     return (
                         <Pressable
                             key={item.label}
                             style={styles.menuItem}
                             onPress={() => navigation.navigate(item.routeName)}
                         >
-                            {({ hovered }) => (
+                            {({ hovered }: any) => (
                                 <>
                                     <View style={[
                                         styles.iconContainer,

@@ -20,6 +20,40 @@ export const salesforceApi = {
         return data;
     },
 
+    /**
+     * Executes a SOQL query and automatically fetches all subsequent pages of results.
+     */
+    async queryAll(soql: string): Promise<any[]> {
+        const instanceUrl = await authService.getInstanceUrl();
+        let allRecords: any[] = [];
+        let nextRecordsUrl = `/services/data/v60.0/query/?q=${encodeURIComponent(soql)}`;
+
+        while (nextRecordsUrl) {
+            const url = `${instanceUrl}${nextRecordsUrl}`;
+            console.log(`[SFApi] QUERY ALL (Page): ${url}`);
+
+            const response = await authService.callApi(url, { method: 'GET' });
+            const data = await response.json();
+
+            if (!response.ok) {
+                const err = Array.isArray(data) ? data[0] : data;
+                console.error(`[SFApi] QueryAll Failed: ${err.errorCode} - ${err.message}`);
+                throw new Error(err.message || 'Salesforce Query Failed');
+            }
+
+            allRecords = allRecords.concat(data.records || []);
+
+            // Checking if there are more records to fetch
+            if (data.done === false && data.nextRecordsUrl) {
+                nextRecordsUrl = data.nextRecordsUrl;
+            } else {
+                nextRecordsUrl = ''; // Break the loop
+            }
+        }
+
+        return allRecords;
+    },
+
     async create(sobject: string, data: any): Promise<any> {
         const instanceUrl = await authService.getInstanceUrl();
         const url = `${instanceUrl}/services/data/v60.0/sobjects/${sobject}`;
@@ -76,6 +110,22 @@ export const salesforceApi = {
             const result = await response.json();
             console.error('[SFApi] Upload Failed:', result);
             throw new Error(result[0]?.message || 'File upload failed');
+        }
+    },
+
+    async delete(sobject: string, id: string): Promise<void> {
+        const instanceUrl = await authService.getInstanceUrl();
+        const url = `${instanceUrl}/services/data/v60.0/sobjects/${sobject}/${id}`;
+
+        console.log(`[SFApi] DELETE ${sobject} ${id}: ${url}`);
+        const response = await authService.callApi(url, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            console.error(`[SFApi] Delete ${sobject} Failed:`, JSON.stringify(result, null, 2));
+            throw new Error(result[0]?.message || `Failed to delete ${sobject}`);
         }
     }
 };

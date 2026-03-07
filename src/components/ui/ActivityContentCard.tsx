@@ -1,7 +1,30 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Platform } from 'react-native';
+import ProfileView from './ProfileView';
+import LeaveBalanceGrid from './LeaveBalanceGrid';
 
-const ActivityContentCard = () => {
+interface ActivityContentCardProps {
+    activeTab: string;
+}
+
+const ActivityContentCard: React.FC<ActivityContentCardProps> = ({ activeTab }) => {
+    if (activeTab === 'Profile') {
+        return (
+            <View style={styles.container}>
+                <ProfileView />
+            </View>
+        );
+    }
+
+    if (activeTab === 'Leave') {
+        return (
+            <View style={styles.container}>
+                <LeaveBalanceGrid />
+            </View>
+        );
+    }
+
+
     return (
         <View style={styles.container}>
             <View style={styles.content}>

@@ -9,6 +9,7 @@ import BottomNav from './BottomNav';
 interface MainLayoutProps {
     children: React.ReactNode;
     title: string;
+    scrollable?: boolean;
 }
 
 type RootStackParamList = {
@@ -23,7 +24,7 @@ type RootStackParamList = {
     Holiday: undefined;
 };
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children, title, scrollable = true }) => {
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -96,14 +97,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
                     </View>
 
                     <View style={styles.mainArea}>
-                        <ScrollView
-                            contentContainerStyle={[
-                                styles.scrollContent,
-                                route.name === 'Home' && { padding: 0 }
-                            ]}
-                        >
-                            {children}
-                        </ScrollView>
+                        {scrollable ? (
+                            <ScrollView
+                                contentContainerStyle={[
+                                    styles.scrollContent,
+                                    route.name === 'Home' && { padding: 0 }
+                                ]}
+                            >
+                                {children}
+                            </ScrollView>
+                        ) : (
+                            <View style={[styles.scrollContent, { flex: 1 }]}>
+                                {children}
+                            </View>
+                        )}
 
                         {!isDesktop && <BottomNav />}
                     </View>
@@ -131,6 +138,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#1A1C1E',
+    },
+    subHeaderContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     tabsContainer: {
         flexDirection: 'row',

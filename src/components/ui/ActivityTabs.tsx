@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const ActivityTabs = () => {
-    const [activeTab, setActiveTab] = useState('Approvals');
+interface ActivityTabsProps {
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
+}
+
+const ActivityTabs: React.FC<ActivityTabsProps> = ({ activeTab, setActiveTab }) => {
 
     const tabs = [
         { label: 'Activities', key: 'Activities' },
