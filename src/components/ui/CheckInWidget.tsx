@@ -4,7 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DashboardCard from './DashboardCard';
 import { useAuth } from '../../context/AuthContext';
-import { attendanceService } from '../../features/attendance/attendance.service';
+import { attendanceSessionService } from '../../features/attendance/attendanceSession.service';
 import { cameraService } from '../../services/camera.service';
 
 const CheckInWidget = () => {
@@ -27,7 +27,7 @@ const CheckInWidget = () => {
     React.useEffect(() => {
         if (accountId) {
             const restoreSession = async () => {
-                const activeSession = await attendanceService.getActiveWorkSession(accountId);
+                const activeSession = await attendanceSessionService.getActiveWorkSession(accountId);
                 if (activeSession) {
                     setIsPresent(true);
                     setCurrentSessionId(activeSession.id);
@@ -118,7 +118,7 @@ const CheckInWidget = () => {
         setIsSubmitting(true);
         try {
             if (flowType === 'in') {
-                const sessionId = await attendanceService.checkIn(accountId, capturedImage);
+                const sessionId = await attendanceSessionService.checkIn(accountId, capturedImage);
                 const now = new Date();
                 setIsPresent(true);
                 setCurrentSessionId(sessionId);
@@ -127,7 +127,7 @@ const CheckInWidget = () => {
                 Alert.alert('Success', 'Check-in completed successfully!');
             } else {
                 if (!currentSessionId) throw new Error('No active session found.');
-                await attendanceService.checkOut(currentSessionId, capturedImage);
+                await attendanceSessionService.checkOut(currentSessionId, capturedImage);
                 setIsPresent(false);
                 setCurrentSessionId(null);
                 setCheckInDateTime(null);

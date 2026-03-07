@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../context/AuthContext';
-import { attendanceService, AttendanceRecord, HolidayRecord, LeaveRecord } from '../services/attendance.service';
+import { attendanceQueryService, AttendanceRecord, HolidayRecord, LeaveRecord } from '../services/attendanceQuery.service';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -37,12 +37,12 @@ const AttendanceScreen = () => {
         try {
             // Parallel fetch for data and balances
             const [result, balanceData] = await Promise.all([
-                attendanceService.fetchMonthlyData(
+                attendanceQueryService.fetchMonthlyData(
                     currentDate.getFullYear(),
                     currentDate.getMonth() + 1,
                     accountId
                 ),
-                attendanceService.fetchLeaveBalances(accountId)
+                attendanceQueryService.fetchLeaveBalances(accountId)
             ]);
 
             setData(result);

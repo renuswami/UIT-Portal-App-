@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView, useWindowDimensions, Platform, Text, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
@@ -11,19 +12,8 @@ interface MainLayoutProps {
     title: string;
 }
 
-type RootStackParamList = {
-    Home: undefined;
-    Dashboard: undefined;
-    Attendance: undefined;
-    Leave: undefined;
-    Project: undefined;
-    ProjectTasks: undefined;
-    TimeLog: undefined;
-    Regularization: undefined;
-    Holiday: undefined;
-};
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, title }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -127,10 +117,9 @@ const styles = StyleSheet.create({
         borderBottomColor: '#F0F0F0',
     },
 
-    subHeaderTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1A1C1E',
+    subHeaderContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     tabsContainer: {
         flexDirection: 'row',

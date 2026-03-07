@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, ScrollView, ActivityIndicator } from 'react-nat
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../context/AuthContext';
-import { attendanceService, HolidayRecord } from '../services/attendance.service';
+import { attendanceQueryService, HolidayRecord } from '../services/attendanceQuery.service';
 
 const HolidayScreen = () => {
     const { userEmail } = useAuth();
@@ -17,7 +17,7 @@ const HolidayScreen = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const holidayData = await attendanceService.fetchAllHolidays();
+            const holidayData = await attendanceQueryService.fetchAllHolidays();
             setHolidays(holidayData);
         } catch (error) {
             console.error('[HolidayScreen] Error fetching holidays:', error);
